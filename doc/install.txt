@@ -1,0 +1,197 @@
+GoogleSitemapGenerator Extension
+INSTALLATION + CONFIGURATION
+
+Name   : GoogleSitemapGenerator Extension
+Version: 3.0.0
+Author : MEDIATA Communications GmbH (enhanced with Newssitemap-Module by H.Lindlbauer, lbm-services.de)
+Date   : 2009-02-13 / 2010-04-24
+
+
+1. Description
+
+	The GoogleSitemapGenerator extension generates a xml-sitemap conform to the Google-sitemap-protocol.
+	(https://www.google.com/webmasters/tools/docs/en/protocol.html)
+
+	GoogleSitemapGenerator develops the idea of the GoogleSiteMaps Extension 0.1 by Sergey A. Shishkin
+
+	GoogleSitemapGenerator is tested with eZ Publish 4.0.0
+
+
+2. How to install
+
+	Step 1: Copy the package into the `extension' directory in the root of your eZ publish installation.
+
+	Step 2: Unpack the files in the distribution.
+
+	Step 3: Activate the extension in site.ini.append.php of <eZ Publish root>/settings/override. To do this add the line
+	        ActiveExtensions[]=googlesitemapgenerator beneath the block [ExtensionSettings]. If this block
+	        does not exist, you have to create it.
+
+	        If the extension should only be used by one or more certain siteaccess/es, activate it in the
+	        site.ini.append.php appropriate to the siteaccess:
+	        <eZ Publish root>/settings/siteaccess/<siteaccess_name>/site.ini.append.php
+	        Do not forget to use "ActiveAccessExtensions" instead of "ActiveExtensions"!
+
+	        You can also activate the extension through the admin interface, in Setup/Extentions.
+	        Just make the extension active by checking the checkbox, and validate with the "Apply Changes" button.
+	        Caution : Activating the extension via admin interface will activate it for all siteaccess.
+
+	Step 4: Add additional design in override/site.ini.append.php:
+			[DesignSettings]
+			AdditionalSiteDesignList[]=googlesitemapgenerator
+
+	Step 5: Give anonymous user full access for module "googlesitemap"
+			If you want to generate News Sitemaps do the same for module "googlenewssitemap"
+
+
+3. Configurating GoogleSitemapGenerator
+
+	3.1 googlesitemapgenerator.ini.append.php
+
+		If you want to have global settings for all your siteaccesses you can use googlesitemapgenerator.ini.append.php
+		in <eZ Publish root>/extension/googlesitemapgenerator/settings.
+		If you want to have different settings for your siteaccesses, move googlesitemapgenerator.ini.append.php to the
+		appropriate directory: <eZ Publish root>/settings/siteaccess/<siteaccess_name>/googlesitemapgenerator.ini.append.php.
+
+		It is neccessary to set the path from your server-root to eZ Publish-root for $ezPublishDir in generate.php.
+		Do not use slashes at the begin or end!
+
+		--> [PathSettings]
+            EZPublishDirectory=cms
+
+		There are many settings to control the priority, change-frequence and visibility of a node:
+
+		To understand the different configuration-settings, please read comments in googlesitemapgenerator.ini.append.php.
+
+		3.1.1 Order the changefreq is determined for a node:
+
+			1. <changefreq> for individual <NodeID>
+			   [NodeChangeFreqSettings]
+			   NodeIndividualChangefreq[<NodeID>]=<value>
+
+			2. all children of <NodeID> get the value for <changefreq> as explained in <matrix>
+			   [FolderChangeFreqSettings]
+			   FolderChangefreqModified[<NodeID>]=<matrix>
+
+			   <matrix> which explains the relation between a <time-interval> (in seconds) and its <changefreq-value>
+			   <matrix>[]=<time-interval>;<changefreq-value>
+
+			3. <changefreq> for certain subtree
+			   <NodeID> and all its children get <value> for <changefreq>
+			   [SubtreeChangeFreqSettings]
+			   SubtreeChangefreq[<NodeID>]=<value>
+
+			4. <NodeID> and all its children with depth <= <depth> get for <changefreq> the value listed in <matrix>
+			   depending on the last modified child
+			   <matrix> must be an array of settings explained beneath
+			   set <depth>=0 for unlimited depth
+			   [SubtreeChangeFreqSettings]
+			   SubtreeChangefreqModified[<NodeID>]=<matrix>;<depth>
+
+			   this matrix shows the relation between the time-interval of last modification and its changefreq-value
+			   <matrix>[]=<time-interval in seconds>;<changefreq-value>
+
+			   SubtreeChangefreqModified[69]=NewsSetTree;0 in connection with NewsSetTree[0]=3600;always means:
+			   Node 69 and all its children (independet of depth as <depth>=0) get "always" for <changefreq>,
+			   if minimum one node of the subtree 69 was modified in one hour (3600 seconds) or less
+
+			5. <changefreq> based on absolute depth of node;
+			   [NodeChangeFreqSettings]
+			   NodeDepthChangefreq[<depth>]=<value>
+
+			6. set standard <value> for last fallback
+			   [StandardSettings]
+			   StandardChangefreq=<value>
+
+
+		3.1.2 Order the priority is determined for a node:
+
+			1. <priority> for individual <NodeID>
+			   [NodePrioritySettings]
+			   NodeIndividualPriority[<NodeID>]=<value>
+
+			2. all children of <NodeID> get the value for <priority> as explained in <matrix>
+			   [FolderPrioritySettings]
+			   FolderPriorityModified[<NodeID>]=<matrix>
+
+			   <matrix> which explains the relation between a <time-interval> (in seconds) and its <priority-value>
+			   <matrix>[]=<time-interval>;<priority-value>
+
+			3. <priority> for certain subtree
+			   <NodeID> and all its children get <value> for <priority>
+			   [SubtreePrioritySettings]
+			   SubtreePriority[<NodeID>]=<value>
+
+			4. <NodeID> and all its children with depth <= <depth> get for <priority> the value listed in <matrix>
+			   depending on the last modified child
+			   <matrix> must be an array of settings explained beneath
+			   set <depth>=0 for unlimited depth
+			   [SubtreePrioritySettings]
+			   SubtreePriorityModified[<NodeID>]=<matrix>;<depth>
+
+			   this matrix shows the relation between the time-interval of last modification and its <priority-value>
+			   <matrix>[]=<time-interval in seconds>;<priority-value>
+
+			   SubtreePriorityModified[69]=NewsSetTree;0 in connection with NewsSetTree[0]=3600;1 means:
+			   Node 69 and all its children (independet of depth as <depth>=0) get "1" for <priority>,
+			   if minimum one node of the subtree 69 was modified in one hour (3600 seconds) or less
+
+			5. <priority> based on absolute depth of node;
+			   [NodePrioritySettings]
+			   NodeDepthPriority[<depth>]=<value>
+
+			6. set standard <value> for last fallback
+			   [StandardSettings]
+			   StandardPriority=<value>
+
+
+		3.1.3 Order the visibility is determined for a node:
+
+			1. visibility for individual NodeID
+			   it is not neccessary to set 'show' as it is the default value
+			   [NodeVisibilitySettings]
+			   NodeIndividualVisibility[<NodeID>]=hide|show
+
+			2. visibility for a subtree
+			   values are "hide", "show" with "show" as default
+			   [SubtreeVisibilitySettings]
+			   SubtreeVisibility[<NodeID>]=hide|show
+
+			3. standard visibility is "show" on default
+
+
+		3.1.4 Other settings
+
+			set include to include objects of classes listed in Class_Filter_Array
+			set exclude to exclude objects of classes listed in Class_Filter_Array
+			[Classes]
+			ClassFilterType=include
+
+			setting array to include/exclude classes in sitemap
+			ClassFilterArray[]
+			ClassFilterArray[]=folder
+			ClassFilterArray[]=article
+			...
+
+			set true to include only main node of content object in sitemap
+			set false to include all nodes of content object in sitemap
+			[NodeSettings]
+			MainNodeOnly=true|false
+			
+			
+		3.1.5 If you want to generate News Sitemaps see readme.txt and edit settings for section "NewsSitemapSettings"
+				see http://www.google.com/support/webmasters/bin/answer.py?hl=de&answer=74288 for details
+		
+			[NewsSitemapSettings]
+			PublicationName=
+			PublicationLanguage=
+			NewsGenres=PressRelease
+			
+			# StartDate = days back from now
+			# Google recommends to list only news not older than 2 days (2*24*60*60)
+			# so set StartDate to  2
+			StartDate=2
+			NewsLimit=5000
+			 
+		
+		
